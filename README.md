@@ -2,206 +2,193 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](./LICENSE)
 [![Uniswap v4](https://img.shields.io/badge/Uniswap-v4%20hook-7c8bff.svg)](https://docs.uniswap.org/contracts/v4/overview)
+[![Unichain Sepolia](https://img.shields.io/badge/Unichain-Sepolia%201301-00d395.svg)](https://sepolia.uniscan.xyz)
 
-UHI10 — *Sustainable Liquidity & MEV Protection*
+**Live desk:** [uhi10-surplus-sink.vercel.app](https://uhi10-surplus-sink.vercel.app) · **Pool:** ssVOL / ssUSD · **Hook:** [`0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4`](https://sepolia.uniscan.xyz/address/0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4)
 
-> **Private orderflow sits beside Uniswap. This hook is the first pool that is the refund address.**
+> Private orderflow already sits beside Uniswap. This pool is the refund address.
 
 ---
 
 ## The idea
 
-**Surplus Sink is a Uniswap v4 hook that makes a Uniswap pool the settlement destination for Flashbots Protect / MEV-Share surplus.**
+Surplus Sink is a **Uniswap v4 hook that makes a Uniswap pool the settlement destination for Flashbots Protect / MEV-Share–shaped surplus**.
 
-Private order-flow systems already exist. They sit **off to the side** of Uniswap (UHI10 theme problem #5). Refunds and backrun shares go to the user, the builder, or an off-chain accounting pipe. The pool that created the MEV — the LPs who took the other side — gets nothing.
+Private order-flow systems exist **off to the side** of Uniswap. Refunds and backrun shares go to the user, the builder, or an off-chain pipe. The LPs who took the other side get nothing.
 
-Surplus Sink closes that gap:
+This hook closes that gap with **two ingresses and one LP sink**:
 
-- **Private path** (Protect / MEV-Share): the swap still lands in the v4 pool. Inclusion proofs or refund callbacks **credit the hook**. The hook **`donate`s that surplus to in-range LPs**.
-- **Public path**: no proof, no refund. The swap is priced as **unattested toxic flow** (premium fee + recapture tax), so public mempool flow cannot free-ride the private lane.
+1. **Private path** — TEE / Flashtestation heartbeat (`policy.isFair`) **or** an EIP-712 `PrivateReceipt` signed by an owner-set Protect-style relayer, bound to this `poolId`. Fee **0.05%**, no public tax. Relayer later **`creditSurplus`** real tokens; the hook `donate`s them to in-range LPs.
+2. **Public path** — empty `hookData`, no heartbeat. Fee **1.00%** plus a **0.50% recapture tax** donated to the same LPs.
 
-Same pool. Two ingresses. One LP sink.
+Same book. No mock verifier in `src/`. Receipts are burned so they cannot be replayed.
 
-This is the official UHI10 **hybrid-routing** prompt with a partner **none of the 660 prior directory rows integrated**: Flashbots Protect / MEV-Share. Fourteen homegrown "CoW" matchers exist. Zero Protect.
+---
 
 ## The problem it solves
 
-- **Protect refunds the user, not the LP.** The inventory that was arb'd is still LP inventory. Surplus Sink pays the LP.
-- **MEV-Share is a hint marketplace.** Without a pool-level sink, Uniswap is just another orderflow source. With a sink, **this pool is the venue that internalizes its own MEV**.
-- **Fake hybrid routers** in past cohorts matched intents off-chain and called it CoW. They did not speak Protect. Unique execution for UHI10 is a **real interface**, even if the demo uses a recorded refund adapter.
-- **Attestation-only hooks** (Fair Flow / Fair Path corridor 1) ask "was the *block* fair?" Surplus Sink asks "did *this swap* come in privately, and where did the refund go?" Both are fair-flow. They are not the same question.
+- **Protect refunds the user, not the LP.** The inventory that was arb’d is still LP inventory. Surplus Sink pays the LP.
+- **MEV-Share is a hint marketplace.** Without a pool-level sink, Uniswap is just another OF source. With a sink, **this venue internalizes its own MEV**.
+- Homegrown “CoW” routers in past cohorts did not speak Protect. The unique execution is a **real relayer + donate interface**.
+- Attestation-only hooks ask “was the *block* fair?” Surplus Sink asks “did *this swap* come in privately, and where did the refund go?”
+
+---
 
 ## How it works
 
-There are two honest layers. Do not pretend the hook can see Flashbots from inside `beforeSwap` without a proof.
+The hook **does not** call Flashbots. It verifies a seam, then settles tokens.
 
-**On-chain (the hook)**
+**On-chain**
 
-1. **`beforeSwap`** — private if a registered TEE builder has heartbeated this block (`UnichainFairOracle.isFair`) **or** `hookData` is a valid EIP-712 `PrivateReceipt` signed by an owner-set relayer and bound to this `poolId`. Then `PRIVATE_FEE` (0.05%). Else `PUBLIC_FEE` (1.00%).
-2. **`afterSwap`** — public path: skim `PUBLIC_TAX_BIPS` of the unspecified token and `donate` to LPs. Private path: no tax. Receipts are burned so they cannot be replayed.
-3. **`creditSurplus(key, amountOn0, amount)`** — **relayer only**. `safeTransferFrom` real tokens, then `donate` → `settle` inside `PoolManager.unlock`.
+1. **`beforeSwap`** — private if empty `hookData` and `policy.isFair(block.number)`, or if `hookData` decodes a valid unused receipt (`ecrecover` ∈ `isRelayer`). Else public. Expired / bad signatures revert `Expired` / `BadReceipt`.
+2. **`afterSwap`** — public: skim `PUBLIC_TAX_BIPS` and donate. Private: burn the receipt (if any); no tax.
+3. **`creditSurplus(key, amountOn0, amount)`** — `only` `isRelayer`. `safeTransferFrom` → `poolManager.unlock` → `donate` + `settle`.
 
-**Off-chain (the relayer)**
+**Off-chain**
 
-The relayer is whoever Flashbots Protect / MEV-Share (or your TEE builder) pays. That address is `setRelayer`'d. It signs receipts and later `creditSurplus`s. There is no permissionless mock refund.
+The address Flashbots (or your TEE builder) pays is `setRelayer`’d. It signs receipts and later credits surplus. Do not claim a testnet key *is* Flashbots mainnet; claim **signed receipt + real donate**.
 
 ```mermaid
 flowchart TD
-    A[Swap submitted] --> B{private proof in hookData?}
-    B -- "yes · Protect / MEV-Share" --> C["beforeSwap: PRIVATE_FEE 0.05%"]
-    C --> D[afterSwap: record swapHash → poolId]
-    D --> E[Adapter receives refund]
-    E --> F["creditSurplus → donate to in-range LPs"]
-    B -- "no · public mempool" --> G["beforeSwap: PUBLIC_FEE 1.00%"]
-    G --> H["afterSwap: skim PUBLIC_TAX · donate"]
-    F --> I[emit SurplusCredited]
+    A[Swap submitted] --> B{TEE fair this block or valid receipt?}
+    B -->|yes private| C[Fee 0.05%]
+    C --> D[afterSwap no public tax]
+    D --> E[Relayer creditSurplus]
+    E --> F[donate surplus to LPs]
+    B -->|no public| G[Fee 1.00%]
+    G --> H[skim 0.50% donate]
+    F --> I[SwapClassified / SurplusCredited]
     H --> I
 ```
 
-```mermaid
-flowchart LR
-    U[User] -- "Protect RPC / MEV-Share" --> FB[Flashbots]
-    FB -- "bundle lands on Unichain / ETH" --> PM[PoolManager]
-    PM -- "hook callbacks" --> H[SurplusSinkHook]
-    FB -- "refund / backrun share" --> AD[ProtectAdapter]
-    AD -- "creditSurplus" --> H
-    H -- "donate" --> LP[In-range LPs]
-```
-
-## Proof model — how the hook knows a path is private
-
-The hook **does not** call Flashbots. It verifies a **seam**:
-
-1. **TEE / Flashtestations** — `UnichainFairOracle` (live `FlashblockNumber` or owner-gated builder keys).
-2. **Protect-shaped EIP-712** — `PrivateReceipt(deadline, nonce, poolId)` signed by `isRelayer[signer]`.
-
-`creditSurplus` pulls ERC-20 from that same relayer. Do not claim in the video that a testnet relayer key *is* Flashbots mainnet. Claim the **signed receipt + real donate**.
+---
 
 ## Complete user flow
 
 ```mermaid
 sequenceDiagram
     actor User
-    participant UI as Console
-    participant Protect as Relayer / Protect
-
+    participant Desk as Surplus Sink desk
+    participant Relayer as Protect-shaped relayer
+    participant Router as v4 SwapRouter
     participant PM as PoolManager
     participant Hook as SurplusSinkHook
+    participant Oracle as UnichainFairOracle
     participant LPs as In-range LPs
 
-    alt Send private
-        User->>UI: Swap via private path
-        UI->>Protect: submit + signed receipt
-
-        Protect->>PM: swap(hookData = proof)
-        PM->>Hook: beforeSwap → PRIVATE_FEE
-        PM->>Hook: afterSwap → map swapHash
-        Protect->>Hook: creditSurplus(poolId, refund)
-        Hook->>PM: donate(refund) to LPs
-    else Send public
-        User->>UI: Swap via public mempool
-        UI->>PM: swap(hookData empty)
-        PM->>Hook: beforeSwap → PUBLIC_FEE
-        PM->>Hook: afterSwap → take tax, donate
+    alt private TEE
+        Relayer->>Oracle: incrementFlashblock
+        User->>Desk: swap empty hookData
+        Desk->>Router: swap
+        PM->>Hook: beforeSwap PRIVATE_FEE
+        PM->>Hook: afterSwap no tax
+    else private receipt
+        Relayer->>Relayer: sign PrivateReceipt poolId
+        User->>Desk: swap hookData receipt
+        PM->>Hook: beforeSwap verify EIP-712
+        PM->>Hook: afterSwap burn nonce
+    else public
+        User->>Desk: swap empty hookData no heartbeat
+        PM->>Hook: PUBLIC_FEE plus tax donate
     end
-    Hook-->>UI: emit SwapClassified / SurplusCredited
+    Relayer->>Hook: creditSurplus amount
+    Hook->>PM: donate to LPs
+    Note over Desk,Hook: SinkAgent can burst private/public and credit
 ```
+
+---
 
 ## Hook functions implemented
 
-| Function | Permission | What it does |
+| Surface | Permission | Behavior |
 |---|---|---|
-| `getHookPermissions` | — | `afterInitialize`, `beforeSwap`, `afterSwap`, `afterSwapReturnDelta`. |
-| `_afterInitialize` | `afterInitialize` | Require dynamic-fee flag. |
-| `_beforeSwap` | `beforeSwap` | Verify private proof; override `PRIVATE_FEE` or `PUBLIC_FEE`. |
-| `_afterSwap` | `afterSwap` + return delta | Public: recapture tax. Private: record `swapHash → poolId`. |
-| `creditSurplus` | — | Adapter-only; `donate` surplus to the mapped pool. |
+| `getHookPermissions` | — | `afterInitialize`, `beforeSwap`, `afterSwap`, `afterSwapReturnDelta` |
+| `_afterInitialize` | `afterInitialize` | require dynamic-fee flag |
+| `_beforeSwap` | `beforeSwap` | private vs public fee override |
+| `_afterSwap` | `afterSwap` + return delta | public recapture; consume receipt |
+| `creditSurplus` | relayer + nonReentrant | pull tokens, donate via unlock |
+| `unlockCallback` | PoolManager only | donate + settle + `SurplusCredited` |
+| `setRelayer` | owner | allowlist Protect-shaped signer |
+| `SinkAgent.arm` / `burstPrivate` / `burstPublic` / `credit` | agent | desk traffic |
+| `UnichainFairOracle.incrementFlashblock` | builder | TEE-shaped private empty `hookData` |
 
-**On-chain parameters & state**
+`PRIVATE_FEE = 500`, `PUBLIC_FEE = 10_000`, `PUBLIC_TAX_BIPS = 50`. Receipt typehash: `PrivateReceipt(uint256 deadline,uint256 nonce,bytes32 poolId)`.
 
-| Name | Value / type | Meaning |
-|---|---|---|
-| `PRIVATE_FEE` | `500` (0.05%) | Fee when the private-path proof verifies |
-| `PUBLIC_FEE` | `10_000` (1.00%) | Fee when it does not |
-| `PUBLIC_TAX_BIPS` | `50` (0.50%) | Output skim donated on the public path |
-| `totalSurplusDonated[poolId]` | `uint256` | Protect / MEV-Share credits donated |
-| `totalPublicTaxDonated[poolId]` | `uint256` | Public-path recapture |
-| `swapPool[swapHash]` | `PoolId` | Routing key for the adapter |
-| `SwapClassified` | `event` | Private vs public, fee, tax |
-| `SurplusCredited` | `event` | Adapter, pool, amount |
+---
+
+## Deployments — Unichain Sepolia (chainId 1301)
+
+| Contract | Address |
+|---|---|
+| **SurplusSinkHook** | [`0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4`](https://sepolia.uniscan.xyz/address/0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4) |
+| **UnichainFairOracle** | [`0xF5D7dcFA8ae0323fCd5dEcC70938465849304627`](https://sepolia.uniscan.xyz/address/0xF5D7dcFA8ae0323fCd5dEcC70938465849304627) |
+| **SinkAgent** | [`0x60aB4A85e44F5BD59A03A0b247493e16583dCa30`](https://sepolia.uniscan.xyz/address/0x60aB4A85e44F5BD59A03A0b247493e16583dCa30) |
+| Relayer (owner-set) | [`0x4b992F2Fbf714C0fCBb23baC5130Ace48CaD00cd`](https://sepolia.uniscan.xyz/address/0x4b992F2Fbf714C0fCBb23baC5130Ace48CaD00cd) |
+| ssVOL (token0) | [`0x5CB7273e88F6f17E5a5051AfC2bD8D8A2f90de0E`](https://sepolia.uniscan.xyz/address/0x5CB7273e88F6f17E5a5051AfC2bD8D8A2f90de0E) |
+| ssUSD (token1) | [`0x9Cf385638a1091c59B86625C34EA4E1cCCADf6E4`](https://sepolia.uniscan.xyz/address/0x9Cf385638a1091c59B86625C34EA4E1cCCADf6E4) |
+| PoolManager | [`0x00B036B58a818B1BC34d502D3fE730Db729e62AC`](https://sepolia.uniscan.xyz/address/0x00B036B58a818B1BC34d502D3fE730Db729e62AC) |
+| SwapRouter | [`0x9cD2b0a732dd5e023a5539921e0FD1c30E198Dba`](https://sepolia.uniscan.xyz/address/0x9cD2b0a732dd5e023a5539921e0FD1c30E198Dba) |
+| PositionManager | [`0xf969Aee60879C54bAAed9F3eD26147Db216Fd664`](https://sepolia.uniscan.xyz/address/0xf969Aee60879C54bAAed9F3eD26147Db216Fd664) |
+| Permit2 | [`0x000000000022D473030F116dDEE9F6B43aC78BA3`](https://sepolia.uniscan.xyz/address/0x000000000022D473030F116dDEE9F6B43aC78BA3) |
+| StateView | [`0xf17D00ffF19D395712ea2Ee16E962a60eBa530BC`](https://sepolia.uniscan.xyz/address/0xf17D00ffF19D395712ea2Ee16E962a60eBa530BC) |
+
+Pool fee flag: `8388608` (dynamic). Tick spacing: `60`. Deploy block: `61520875`. See `frontend/src/deployed.json`.
+
+---
 
 ## Integrations
 
-| Layer | Integration | Used for |
-|---|---|---|
-| **Uniswap v4 core** | `PoolManager`, dynamic-fee override, `donate`, `CurrencySettler` | Path-priced fees + LP sink |
-| **OpenZeppelin** | `uniswap-hooks` `BaseHook` | Hook base |
-| **Flashbots** | Protect RPC, MEV-Share refunds (production); `IPrivatePathVerifier` + adapter (this repo) | Private ingress + surplus |
-| **Frontend / SDK** | `viem`, React, `@uniswap/v4-sdk` | Send private vs Send public, LP pot, event tape |
+| Partner / layer | How Surplus Sink uses it |
+|---|---|
+| **Uniswap v4** | dynamic fees, donate, unlock/settle |
+| **OpenZeppelin uniswap-hooks** | `BaseHook` |
+| **Flashbots Protect / MEV-Share** | EIP-712 receipts + `creditSurplus` as the sink (relayer-shaped) |
+| **Unichain Flashtestations / FlashblockNumber** | empty-`hookData` private lane via `UnichainFairOracle` |
+| **Permit2 + POSM** | LP from the desk |
+| **viem + v4 SDK** | private vs public swap, surplus tape |
 
-**Partner integrations (hookathon README requirement)**
+---
 
-- **Flashbots Protect / MEV-Share** — partner. The hook verifies EIP-712 receipts from an owner-set relayer and donates `creditSurplus` tokens. TEE path uses Unichain Flashtestations / `FlashblockNumber`. No mock verifier in `src/`.
+## Why this is a business
 
-## Why it's profitable — as an idea and a business
+You are selling **the only Uniswap-native address Protect-style refunds can settle into**, plus a public-path tax so mempool flow cannot free-ride the private lane.
 
 ```mermaid
 flowchart LR
-    A[Private flow earns a refund] --> B[Refund donated to this pool's LPs]
-    B --> C[LPs prefer this venue]
-    C --> D[Aggregators route private flow here]
-    D --> E[More Protect volume]
-    E --> A
-    F[Public flow pays tax] --> B
+    P[Private flow earns a refund] --> D[Donate to this pool LPs]
+    Pub[Public flow pays tax] --> D
+    D --> LP[LPs prefer this venue]
+    LP --> Agg[Aggregators route Protect here]
+    Agg --> Vol[More private volume]
+    Vol --> P
 ```
 
-**For LPs.** They finally get the MEV their inventory created when users routed privately *and* a tax when users did not.
+**Unit economics (v1)**
 
-**For private-path traders.** Cheap fee (0.05%) plus sandwich resistance from Protect. They do not lose the refund — the design can split user vs LP later; v1 can send 100% to LPs and still be the only pool that *can* receive it.
+- **LP take:** 100% of public skim + 100% of credited surplus. That is inventory insurance LPs do not get from vanilla v4 or from Protect-to-EOA refunds.
+- **Private trader take:** 0.05% fee + sandwich resistance from the private RPC. v1 can send 100% of refunds to LPs and still be the only pool that *can* receive them; a later user/LP split is a product toggle, not a new hook.
+- **Flashbots / relayer take:** distribution. Wallets keep Protect pointed at **pools that speak the adapter**. You are infrastructure, not a fork of Flashbots.
+- **Protocol take (later):** a spread on *public tax* and/or *surplus credits*, never a penalty on the private 0.05% retail fee. Two MEV-native lines: “mempool tax” and “private surplus routing.”
 
-**For Flashbots.** A Uniswap-native sink is a reason for searchers and wallets to keep Protect pointed at **pools that speak the adapter**. That is a distribution story, not a fork.
+**Go-to-market:** list as a Protect-compatible pool, then wallets/RPCs, then LPs on pairs that already leak to MEV-Share. `SinkAgent` is the demo keeper; production is the relayer you already pay.
 
-**For the protocol.** Two fee lines: public tax, private surplus. Both MEV-native. Neither taxes attested/private retail as a penalty.
+**UHI10 fit:** hybrid routing between private orderflow and Uniswap. Directory cheat code: almost nobody integrated Flashbots. Win condition: defense (private path) + recapture (`donate`).
 
-**Why it fits UHI10.** Official prompt: hybrid routing between private orderflow and Uniswap. Official cheat code: **0 / 660 Flashbots integrations**. Win condition: defense (private path) + recapture (donate).
+---
 
 ## What this is not
 
-- Not Fair Path (no flashblock slot schedule, no searcher slash).
-- Not Sold Backrun (no on-pool backrun NFT / auction).
-- Not a homegrown CoW matcher.
-- Not a claim that the testnet relayer *is* Flashbots mainnet. The video must say **signed receipt + donate is real**.
+Not Fair Path (no slot schedule, no slash). Not Sold Backrun (no backrun NFT). Not a claim that the Sepolia relayer *is* Flashbots mainnet.
 
-## The console
+## Tests and layout
 
-Live: **https://uhi10-surplus-sink.vercel.app**
-
-Private vs public swap on **ssVOL / ssUSD**. Relayer `creditSurplus` is live via `SinkAgent` on Sepolia.
-
-## Testing
-
-`forge test` — public tax, private receipt (no tax), receipt replay revert, TEE heartbeat private, relayer `creditSurplus`, unauthorized credit revert, garbage `hookData` revert.
-
-## Repository layout
+`forge test` — public tax, private receipt, replay, TEE heartbeat, `creditSurplus`, agent, invariants, fork.
 
 ```
-src/
-  SurplusSinkHook.sol
-  UnichainFairOracle.sol
-  interfaces/
-test/
-  SurplusSinkHook.t.sol
-script/
-  DeployUnichain.s.sol
-  PopulateTraffic.s.sol
-frontend/
+src/SurplusSinkHook.sol  src/UnichainFairOracle.sol  src/SinkAgent.sol
+test/  script/  frontend/
 ```
 
 ## Hookathon gates
 
-- Public repo (this repository)
-- Valid Uniswap v4 hook
-- Functioning frontend: https://uhi10-surplus-sink.vercel.app
-- README partner integrations: Flashbots Protect / MEV-Share + Unichain Flashtestations
-- Video: Send private vs Send public, LP tickers, no AI voice
-- Original work for UHI10; not a resubmission of Fair Flow
+Public repo · valid v4 hook · live UI · Protect-shaped + Unichain TEE seams · original UHI10 work.
