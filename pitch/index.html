@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Surplus Sink — Pitch Deck · UHI10</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" id="theme" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #070b0c; --bg-2: #0c1416; --ink: #e8f6f4; --muted: #9cb8b4;
+        --teal: #3ee0c8; --indigo: #7c8bff; --line: rgba(62, 224, 200, 0.16);
+        --card: rgba(255, 255, 255, 0.035);
+      }
+      .reveal { font-family: "Inter", system-ui, sans-serif; color: var(--ink); font-size: 30px; }
+      .reveal-viewport {
+        background:
+          radial-gradient(1200px 700px at 80% -10%, rgba(124, 139, 255, 0.14), transparent 60%),
+          radial-gradient(1000px 600px at -10% 110%, rgba(62, 224, 200, 0.12), transparent 55%),
+          var(--bg);
+      }
+      .reveal h1, .reveal h2, .reveal h3 {
+        font-family: "Space Grotesk", sans-serif; font-weight: 700; color: var(--ink);
+        text-transform: none; letter-spacing: -0.01em; line-height: 1.08;
+      }
+      .reveal h1 { font-size: 2.5em; }
+      .reveal h2 { font-size: 1.55em; margin-bottom: 0.5em; }
+      .reveal h3 { font-size: 1.05em; }
+      .reveal p, .reveal li { color: var(--ink); line-height: 1.45; }
+      .reveal strong { color: #fff; }
+      .reveal em { color: var(--teal); font-style: normal; font-weight: 600; }
+      .reveal a { color: var(--indigo); text-decoration: none; }
+      .reveal section { text-align: left; }
+      .grad { background: linear-gradient(100deg, var(--teal), var(--indigo)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .kicker { font-family: "JetBrains Mono", monospace; font-size: 0.5em; letter-spacing: 0.28em; text-transform: uppercase; color: var(--teal); margin: 0 0 0.6em; }
+      .muted { color: var(--muted) !important; }
+      .lead { font-size: 1.15em; color: var(--muted); max-width: 22ch; }
+      .center { text-align: center; }
+      .big-quote { font-family: "Space Grotesk", sans-serif; font-size: 1.9em; font-weight: 700; line-height: 1.12; letter-spacing: -0.02em; }
+      .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+      .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+      .card h3 { margin: 0 0 0.35em; }
+      .card p { margin: 0; font-size: 0.82em; color: var(--muted); }
+      .pill { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 0.6em; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin: 0 6px 8px 0; }
+      .pill.teal { color: var(--teal); border-color: rgba(62,224,200,0.45); }
+      .pill.indigo { color: var(--indigo); border-color: rgba(124,139,255,0.4); }
+      .reveal table { font-size: 0.68em; border-collapse: collapse; width: 100%; }
+      .reveal table th, .reveal table td { border-bottom: 1px solid var(--line); padding: 10px 12px; }
+      .reveal table th { color: var(--teal); text-align: left; font-weight: 600; }
+      .mono { font-family: "JetBrains Mono", monospace; font-size: 0.82em; }
+      .flow { display: flex; align-items: stretch; gap: 12px; }
+      .flow .step { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+      .flow .step .n { font-family: "JetBrains Mono", monospace; color: var(--indigo); font-size: 0.6em; }
+      .flow .step h3 { font-size: 0.92em; margin: 6px 0; }
+      .flow .step p { font-size: 0.66em; color: var(--muted); margin: 0; }
+      .flow .arrow { align-self: center; color: var(--teal); font-size: 1.4em; }
+      .footer-note { position: fixed; bottom: 14px; left: 22px; right: 22px; display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--muted); opacity: 0.7; z-index: 5; }
+      .reveal .slide-number { background: transparent; color: var(--muted); }
+      .tag-live { display: inline-flex; align-items: center; gap: 8px; font-family: "JetBrains Mono", monospace; font-size: 0.55em; color: var(--teal); }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 12px var(--teal); }
+      ul.tight li { margin: 0.35em 0; }
+    </style>
+  </head>
+  <body>
+    <div class="footer-note">
+      <span>Surplus Sink · The pool is the refund address</span>
+      <span>UHI10 · Sustainable Liquidity &amp; MEV Protection</span>
+    </div>
+    <div class="reveal">
+      <div class="slides">
+
+        <section data-background-color="#070b0c">
+          <p class="kicker">UHI10 · Uniswap v4 Hookathon · Kingg-titan</p>
+          <h1><span class="grad">Surplus Sink</span></h1>
+          <p class="big-quote" style="max-width: 22ch; margin-top: 0.2em;">
+            Private orderflow leftover shouldn't vanish. <span class="grad">It should sink into LPs.</span>
+          </p>
+          <p class="lead" style="max-width: 38ch; margin-top: 0.6em;">
+            Public swaps pay a tax. Private fills mint a SurplusReceipt. Relayers creditSurplus — donate() into the same pool.
+          </p>
+          <p style="margin-top: 1em;">
+            <span class="tag-live"><span class="dot"></span> LIVE ON UNICHAIN SEPOLIA</span>
+            &nbsp;·&nbsp; <a href="https://uhi10-surplus-sink.vercel.app">uhi10-surplus-sink.vercel.app</a>
+          </p>
+          <aside class="notes">
+            Opening: refund address is the pool. Live ssVOL/ssUSD.
+          </aside>
+        </section>
+
+        <section>
+          <p class="kicker">The problem</p>
+          <h2>RFQ leftover goes to <span class="grad">the solver</span></h2>
+          <div class="cols">
+            <div>
+              <ul class="tight">
+                <li>Private orderflow (RFQ, solver, TEE) often <strong>improves on quote</strong>.</li>
+                <li>That surplus sits in the <strong>relayer / solver wallet</strong> — not the pool.</li>
+                <li>Public toxic flow still <strong>hits LPs with no extra bill</strong>.</li>
+                <li>Attestation-only fees don't create a <strong>receipt</strong> the pool can collect against.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <p class="kicker" style="margin-bottom:0.4em;">The gap</p>
+              <p style="font-size:0.95em; color:var(--ink);">
+                Fair Flow prices the <em>block</em>. Sold Backrun prices the <em>residual hunt</em>.
+              </p>
+              <p style="font-size:0.95em; color:var(--ink); margin-top:0.6em;">
+                Neither makes the pool the <strong>refund address for private surplus</strong>.
+              </p>
+            </div>
+          </div>
+          <aside class="notes">
+            Distinct from Fair Path tax and Sold Backrun auction.
+          </aside>
+        </section>
+
+        <section data-background-color="#0c1416">
+          <p class="kicker">The insight</p>
+          <p class="big-quote">
+            Treat the pool as the <span class="grad">refund address</span>.
+            Mint a <span class="grad">receipt</span> on private fills.
+            <span class="grad">creditSurplus</span> donates it home.
+          </p>
+          <p class="lead" style="max-width: 42ch; margin-top: 0.8em;">
+            Public flow is billed. Private flow is receipted. Either way, LPs are the sink — not the solver's leftover wallet.
+          </p>
+          <div style="margin-top: 1em;">
+            <span class="pill teal">Same pool</span>
+            <span class="pill teal">Public tax</span>
+            <span class="pill indigo">SurplusReceipt</span>
+            <span class="pill indigo">EIP-712 / TEE</span>
+            <span class="pill indigo">donate()</span>
+          </div>
+          <aside class="notes">
+            Two lanes, one sink.
+          </aside>
+        </section>
+
+        <section>
+          <p class="kicker">How it works · the hook</p>
+          <h2>Tax public. Receipt private. <span class="grad">Sink both.</span></h2>
+          <div class="flow">
+            <div class="step">
+              <div class="n">01 · afterSwap</div>
+              <h3>Split the lanes</h3>
+              <p>Public: skim a tax and <span class="mono">donate()</span>. Private: mint a <span class="mono">SurplusReceipt</span> keyed to the fill.</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="step">
+              <div class="n">02 · relayer</div>
+              <h3>Prove surplus</h3>
+              <p>TEE attestation or EIP-712 signed quote vs fill. Relayer calls <span class="mono">creditSurplus</span>.</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="step">
+              <div class="n">03 · settle</div>
+              <h3>Donate home</h3>
+              <p>Hook takes the credited amount and <span class="mono">donate()</span> to in-range LPs. Receipt consumed.</p>
+            </div>
+          </div>
+          <p class="muted" style="font-size:0.7em; margin-top: 1em;">
+            Bad receipts revert. Expired receipts cannot be credited. The pool never trusts a naked number.
+          </p>
+          <aside class="notes">
+            creditSurplus is the money shot in the demo.
+          </aside>
+        </section>
+
+        <section>
+          <p class="kicker">The trust model</p>
+          <h2>The hook does not invent surplus. It <span class="grad">settles a receipt.</span></h2>
+          <div class="flow">
+            <div class="step">
+              <div class="n">01 · private mark</div>
+              <h3>Who is private</h3>
+              <p>Relayer / TEE flag in <span class="mono">hookData</span>. Public is the default — taxed, not receipted.</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="step">
+              <div class="n">02 · quote</div>
+              <h3>EIP-712 or TEE</h3>
+              <p>Signed quote vs executed amount. Surplus = improvement the solver would have kept.</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="step">
+              <div class="n">03 · consume</div>
+              <h3>One receipt, once</h3>
+              <p><span class="mono">BadReceipt</span> / <span class="mono">Expired</span> revert. No double credit into donate.</p>
+            </div>
+          </div>
+          <aside class="notes">
+            Judges: we don't guess leftover — we settle signed surplus.
+          </aside>
+        </section>
+
+        <section>
+          <p class="kicker">The economics per swap</p>
+          <h2>Two lanes, one sink</h2>
+          <table>
+            <thead>
+              <tr><th>Lane</th><th>Who</th><th>Swap fee / tax</th><th>LP recapture</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color:var(--indigo)">Public</strong></td>
+                <td class="muted">untagged / mempool</td>
+                <td><strong>tax on fill</strong></td>
+                <td><strong>donate()</strong> immediately</td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--teal)">Private</strong></td>
+                <td class="muted">RFQ / TEE / relayer</td>
+                <td>honest fill + receipt</td>
+                <td><strong>creditSurplus → donate()</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Failed credit</strong></td>
+                <td class="muted">bad / expired receipt</td>
+                <td>—</td>
+                <td class="muted">revert · no fake donate</td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="margin-top: 1em; font-size: 0.9em;">
+            Solver improvement is not a gift. The pool is the <span class="grad">refund address</span>.
+          </p>
+        </section>
+
+        <section>
+          <p class="kicker">Complete user flow</p>
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Trader
+  participant UI as Console (v4 SDK)
+  participant PM as PoolManager
+  participant Hook as SurplusSinkHook
+  participant Relayer as TEE / EIP-712
+  participant LPs as In-range LPs
+  Trader->>UI: swap ssVOL/ssUSD
+  UI->>PM: swap via v4 router
+  PM->>Hook: afterSwap()
+  alt public
+    Hook->>PM: take tax → donate()
+  else private
+    Hook-->>Hook: mint SurplusReceipt
+    Relayer->>Hook: creditSurplus(receipt)
+    Hook->>PM: donate surplus to LPs
+  end
+          </div>
+          <aside class="notes">
+            Demo: public swap then private + creditSurplus.
+          </aside>
+        </section>
+
+        <section>
+          <p class="kicker">What's implemented</p>
+          <h2>A real, valid v4 hook</h2>
+          <table>
+            <thead><tr><th>Function</th><th>Permission</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">_afterInitialize</td><td class="muted">afterInitialize</td><td>Pool wiring</td></tr>
+              <tr><td class="mono">_afterSwap</td><td class="muted">afterSwap + returnDelta</td><td>Tax or mint receipt</td></tr>
+              <tr><td class="mono">creditSurplus</td><td class="muted">external</td><td>Settle receipt → donate</td></tr>
+              <tr><td class="mono">SinkAgent</td><td class="muted">src/</td><td>Relayer path for demos</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top: 0.8em;">
+            <span class="pill teal">SurplusReceipt</span>
+            <span class="pill indigo">creditSurplus</span>
+            <span class="pill">donate()</span>
+            <span class="pill">Expired</span>
+            <span class="pill">BadReceipt</span>
+          </div>
+        </section>
+
+        <section data-background-color="#0c1416">
+          <p class="kicker"><span class="tag-live"><span class="dot"></span> Live · not a mockup</span></p>
+          <h2>Cut to the desk here</h2>
+          <div class="cols-3">
+            <div class="card"><h3>Trade</h3><p>ssVOL / ssUSD. Public fill should tax into the tape.</p></div>
+            <div class="card"><h3>Receipt</h3><p>Private path mints a SurplusReceipt against the fill.</p></div>
+            <div class="card"><h3>Credit</h3><p><span class="mono">creditSurplus</span> donates leftover into LPs.</p></div>
+          </div>
+          <p class="muted" style="font-size:0.72em; margin-top:0.8em;">
+            Quotes from the Uniswap v4 SDK. Surplus is settled on-chain, not painted in CSS.
+          </p>
+          <aside class="notes">
+            Live beat: public tax, then private credit.
+          </aside>
+        </section>
+
+        <section>
+          <p class="kicker">Integrations</p>
+          <h2>Standing on the v4 stack</h2>
+          <div class="cols-3">
+            <div class="card"><h3>Uniswap v4 core</h3><p>PoolManager · afterSwap · donate · CurrencySettler</p></div>
+            <div class="card"><h3>v4 periphery</h3><p>StateView · PositionManager · Permit2 · SwapRouter</p></div>
+            <div class="card"><h3>Orderflow</h3><p>RFQ / solver leftover as a receipt</p></div>
+            <div class="card"><h3>TEE / EIP-712</h3><p>Attest or sign the improvement</p></div>
+            <div class="card"><h3>OpenZeppelin</h3><p>uniswap-hooks BaseHook</p></div>
+            <div class="card"><h3>Frontend / SDK</h3><p>@uniswap/v4-sdk · viem · React</p></div>
+          </div>
+        </section>
+
+        <section>
+          <p class="kicker">Why it's profitable</p>
+          <h2>A liquidity <span class="grad">flywheel</span></h2>
+          <div class="cols" style="grid-template-columns: 1.05fr 0.95fr;">
+            <div class="mermaid">
+flowchart TD
+  A["Public tax or private surplus"] --> B[donate() into the pool]
+  B --> C[Higher LP yield]
+  C --> D[More liquidity]
+  D --> E[Better private quotes]
+  E --> F[More RFQ routed here]
+  F --> A
+            </div>
+            <div>
+              <ul class="tight" style="font-size:0.82em;">
+                <li><strong>LPs:</strong> catch solver leftover that used to leave the venue.</li>
+                <li><strong>Traders:</strong> private path stays honest; public pays the tax.</li>
+                <li><strong>Relayers:</strong> a clean settle instead of an off-chain rebate fight.</li>
+                <li><strong>Protocol later:</strong> split on tax/surplus — never on honest private fills.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section data-background-color="#0c1416">
+          <p class="kicker">Where this goes</p>
+          <h2>Product surfaces</h2>
+          <div class="cols-3">
+            <div class="card"><h3 class="grad">Solver desks</h3><p>Refund address = pool, not a side wallet.</p></div>
+            <div class="card"><h3 class="grad">RFQ routers</h3><p>Receipt as the settlement primitive.</p></div>
+            <div class="card"><h3 class="grad">TEE builders</h3><p>Attest improvement, then credit.</p></div>
+            <div class="card"><h3 class="grad">Analytics</h3><p>Tax vs surplus tape.</p></div>
+            <div class="card"><h3 class="grad">MEV split</h3><p>Protocol cut on sink, not users.</p></div>
+            <div class="card"><h3 class="grad">Mainnet RFQ</h3><p>Wire real solver quotes to receipts.</p></div>
+          </div>
+        </section>
+
+        <section>
+          <p class="kicker">Why it wins UHI10</p>
+          <h2>Theme: <span class="grad">Sustainable Liquidity &amp; MEV Protection</span></h2>
+          <div class="cols">
+            <div class="card">
+              <h3 style="color:var(--teal)">Sustainability</h3>
+              <p style="color:var(--ink); font-size:0.85em;">LPs receive public tax and private surplus. Liquidity is paid for hosting both lanes.</p>
+            </div>
+            <div class="card">
+              <h3 style="color:var(--indigo)">MEV protection</h3>
+              <p style="color:var(--ink); font-size:0.85em;">Public flow is billed. Private leftover is <strong>receipted and sunk</strong> — not kept by the solver.</p>
+            </div>
+          </div>
+          <p style="margin-top: 1em; font-size:0.9em;">
+            One hook, both halves — <span class="grad">tax + refund</span>. Not Fair Flow with a new name.
+          </p>
+        </section>
+
+        <section>
+          <p class="kicker">Deployed · Unichain Sepolia (1301)</p>
+          <h2>Try it yourself</h2>
+          <table>
+            <tbody>
+              <tr><td><strong>SurplusSinkHook</strong></td><td class="mono"><a href="https://sepolia.uniscan.xyz/address/0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4">0xc3EE…50c4</a></td></tr>
+              <tr><td>Oracle / policy</td><td class="mono"><a href="https://sepolia.uniscan.xyz/address/0xF5D7dcFA8ae0323fCd5dEcC70938465849304627">0xF5D7…4627</a></td></tr>
+              <tr><td>Relayer</td><td class="mono"><a href="https://sepolia.uniscan.xyz/address/0x4b992F2Fbf714C0fCBb23baC5130Ace48CaD00cd">0x4b99…00cd</a></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top: 1em;">
+            <span class="pill teal">Live · uhi10-surplus-sink.vercel.app</span>
+            <span class="pill indigo">github.com/Kingg-titan/surplus-sink</span>
+          </div>
+          <aside class="notes">
+            Shared PM. Do not redeploy the hook.
+          </aside>
+        </section>
+
+        <section data-background-color="#070b0c" class="center">
+          <p class="kicker center">Surplus Sink</p>
+          <p class="big-quote center" style="max-width: 24ch; margin: 0 auto;">
+            Leftover had a wallet.<br /><span class="grad">It should have been the pool.</span>
+          </p>
+          <p class="lead" style="max-width: 42ch; margin: 1em auto 0; text-align:center;">
+            Tax the public lane. Receipt the private lane. Donate both home.
+          </p>
+          <p style="margin-top: 1.4em;">
+            <a href="https://uhi10-surplus-sink.vercel.app">uhi10-surplus-sink.vercel.app</a>
+            &nbsp;·&nbsp;
+            <a href="https://github.com/Kingg-titan/surplus-sink">GitHub</a>
+          </p>
+          <aside class="notes">Close. Thank the judges.</aside>
+        </section>
+
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          background: "transparent",
+          primaryColor: "#0c1416",
+          primaryTextColor: "#e8f6f4",
+          primaryBorderColor: "#7c8bff",
+          lineColor: "#3ee0c8",
+          secondaryColor: "#0c1416",
+          tertiaryColor: "#0c1416",
+          fontFamily: "Inter, sans-serif",
+          fontSize: "16px",
+          actorBkg: "#0c1416",
+          actorBorder: "#7c8bff",
+          actorTextColor: "#e8f6f4",
+          signalColor: "#9cb8b4",
+          signalTextColor: "#e8f6f4",
+          noteBkgColor: "#102426",
+          noteTextColor: "#e8f6f4",
+        },
+      });
+      Reveal.initialize({
+        hash: true, slideNumber: "c/t", transition: "slide", transitionSpeed: "fast",
+        backgroundTransition: "fade", width: 1280, height: 720, margin: 0.06,
+        controls: true, progress: true, plugins: [RevealNotes],
+      });
+    </script>
+  </body>
+</html>

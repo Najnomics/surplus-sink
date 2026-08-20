@@ -4,7 +4,7 @@
 [![Uniswap v4](https://img.shields.io/badge/Uniswap-v4%20hook-7c8bff.svg)](https://docs.uniswap.org/contracts/v4/overview)
 [![Unichain Sepolia](https://img.shields.io/badge/Unichain-Sepolia%201301-00d395.svg)](https://sepolia.uniscan.xyz)
 
-**Live desk:** [uhi10-surplus-sink.vercel.app](https://uhi10-surplus-sink.vercel.app) · **Pool:** ssVOL / ssUSD · **Hook:** [`0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4`](https://sepolia.uniscan.xyz/address/0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4)
+**Live desk:** [uhi10-surplus-sink.vercel.app](https://uhi10-surplus-sink.vercel.app) · **Pitch:** [uhi10-surplus-sink-pitch.vercel.app](https://uhi10-surplus-sink-pitch.vercel.app) · **Pool:** ssVOL / ssUSD · **Hook:** [`0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4`](https://sepolia.uniscan.xyz/address/0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4)
 
 > Private orderflow already sits beside Uniswap. This pool is the refund address.
 
@@ -186,7 +186,7 @@ Not Fair Path (no slot schedule, no slash). Not Sold Backrun (no backrun NFT). N
 
 ```
 src/SurplusSinkHook.sol  src/UnichainFairOracle.sol  src/SinkAgent.sol
-test/  script/  frontend/
+test/  script/  frontend/  pitch/
 ```
 
 ## Hookathon gates
