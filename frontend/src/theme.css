@@ -1,0 +1,191 @@
+:root {
+  --bg: #041018;
+  --bg-1: #071820;
+  --bg-2: #0a222c;
+  --surface: #0c2a36;
+  --surface-2: #10323f;
+  --surface-3: #163c4a;
+  --line: #1d5364;
+  --line-2: #2a7188;
+  --text: #e8fbff;
+  --text-2: #9fd4e0;
+  --muted: #6a9eac;
+  --fair: #5eead4;
+  --fair-2: #99f6e4;
+  --fair-dim: #134e4a;
+  --toxic: #c4b5fd;
+  --toxic-2: #ddd6fe;
+  --toxic-dim: #2e1065;
+  --accent: #38bdf8;
+  --accent-2: #7dd3fc;
+  --gold: #fde68a;
+  --radius: 28px;
+  --radius-lg: 36px;
+  --radius-sm: 999px;
+  --shadow: 0 30px 80px rgba(0, 40, 60, 0.45);
+  --shadow-sm: 0 12px 40px rgba(0, 30, 50, 0.3);
+  --glow-fair: 0 0 28px rgba(94, 234, 212, 0.28);
+  --glow-toxic: 0 0 28px rgba(196, 181, 253, 0.28);
+  --font: "Outfit", system-ui, sans-serif;
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+body::before {
+  background:
+    radial-gradient(700px 700px at 20% -10%, rgba(56, 189, 248, 0.28), transparent 55%),
+    radial-gradient(800px 600px at 110% 20%, rgba(94, 234, 212, 0.18), transparent 50%),
+    radial-gradient(600px 500px at 50% 110%, rgba(196, 181, 253, 0.14), transparent 50%);
+}
+
+.lagoon-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.lagoon-wash {
+  pointer-events: none;
+  position: fixed;
+  inset: auto -20% -30% auto;
+  width: 60vw;
+  height: 60vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 70%);
+}
+.lagoon-bar {
+  position: sticky;
+  top: 14px;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+}
+.lagoon-pill {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  width: min(1120px, 100%);
+  padding: 10px 14px 10px 22px;
+  border-radius: 999px;
+  background: rgba(7, 24, 32, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  backdrop-filter: blur(18px);
+}
+.lagoon-mark {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+  color: var(--accent-2);
+}
+.lagoon-nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.lagoon-nav a {
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--text-2);
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+.lagoon-nav a.on,
+.lagoon-nav a:hover {
+  background: rgba(56, 189, 248, 0.16);
+  color: var(--text);
+}
+.lagoon-tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+.lagoon-foot {
+  text-align: center;
+  padding: 28px 16px 40px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.lagoon-foot a {
+  color: var(--accent-2);
+}
+.lagoon-app .content {
+  padding-top: 28px;
+}
+
+.btn {
+  border-radius: 999px;
+}
+.btn-primary {
+  background: linear-gradient(90deg, var(--accent), var(--fair));
+  color: #04202a;
+  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
+}
+.hero,
+.sink-orb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-radius: 48px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.28), transparent 55%),
+    var(--surface);
+  border: 1px solid rgba(94, 234, 212, 0.25);
+  padding: 56px 28px 36px;
+}
+.hero h1,
+.sink-orb h1 {
+  max-width: 16ch;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+}
+.hero p,
+.sink-orb p {
+  margin-left: auto;
+  margin-right: auto;
+}
+.hero-cta {
+  justify-content: center;
+}
+.hero-flow {
+  position: static;
+  width: min(420px, 90%);
+  height: 140px;
+  margin-top: 12px;
+}
+.sink-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--fair);
+  display: grid;
+  place-items: center;
+  color: var(--fair);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 18px;
+}
+.hero h1 .grad {
+  background: linear-gradient(90deg, var(--accent), var(--fair));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.cta-band {
+  border-radius: 36px;
+  background: linear-gradient(120deg, #0c2a36, #134e4a);
+}
+.chip {
+  border-radius: 999px;
+}
+
+@media (max-width: 900px) {
+  .lagoon-nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+}

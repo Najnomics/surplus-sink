@@ -23,8 +23,9 @@ export function Overview() {
 
   return (
     <div className="grid" style={{ gap: 22 }}>
-      <section className="hero">
-        <span className="hero-eyebrow">● UHI10 · Sustainable Liquidity & MEV Protection</span>
+      <section className="hero sink-orb">
+        <div className="sink-ring">SINK</div>
+        <span className="hero-eyebrow">private path · public tax</span>
         <h1>
           Protect / TEE surplus <span className="grad">donates to LPs</span>.
         </h1>
@@ -36,19 +37,15 @@ export function Overview() {
         </p>
         <div className="hero-cta">
           <Link to="/swap" className="btn btn-primary">
-            <IconSwap /> Try a swap
+            <IconSwap /> Route a swap
           </Link>
-          <Link to="/analytics" className="btn btn-outline">
-            <IconChart /> See the flow
-          </Link>
-          <Link to="/about" className="btn btn-outline">
-            How it works
+          <Link to="/attestation" className="btn btn-outline">
+            Relayer
           </Link>
         </div>
-        <svg className="hero-flow" viewBox="0 0 380 260">
-          <path d="M0 200 C 90 200 90 80 190 80 S 290 200 380 200" stroke="#34e1a4" />
-          <path d="M0 230 C 90 230 90 130 190 130 S 290 30 380 30" stroke="#7c8bff" />
-          <path d="M0 160 C 90 160 90 40 190 40 S 290 160 380 160" stroke="#ff5f6d" opacity="0.6" />
+        <svg className="hero-flow" viewBox="0 0 380 140">
+          <path d="M0 90 C 90 90 90 30 190 30 S 290 110 380 110" stroke="#38bdf8" />
+          <path d="M0 120 C 90 120 90 50 190 50 S 290 20 380 20" stroke="#5eead4" />
         </svg>
       </section>
 
@@ -196,7 +193,7 @@ function QuickActions() {
             <QuickCard
               icon={<IconCoins />}
               title="Get test tokens"
-              body="Mint 10,000 ffVOL + ffUSD to your wallet."
+              body="Mint 10,000 ssVOL + ssUSD to your wallet."
               action="Faucet"
               busy={busy === "Minted test tokens"}
               disabled={!!busy}
