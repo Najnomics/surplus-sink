@@ -205,7 +205,7 @@ function QuickActions() {
           <QuickCard
             icon={<IconShield />}
             title="Pulse TEE heartbeat"
-            body="Owner-gated builder incrementFlashblock — not a mock fair window."
+            body="Owner-gated. Only the oracle owner can incrementFlashblock on Sepolia."
             action="incrementFlashblock"
             busy={busy === "TEE heartbeat"}
             disabled={!!busy}

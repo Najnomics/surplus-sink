@@ -11,7 +11,7 @@ import {
 } from "./clients";
 import {
   erc20Abi,
-  fairFlowHookAbi,
+  hookAbi,
   policyAbi,
   stateViewAbi,
   swapRouterAbi,
@@ -190,7 +190,7 @@ export async function readSwapEvents(limit = 12): Promise<SwapEvent[]> {
 export async function readTotalRecaptured(): Promise<bigint> {
   return (await publicClient.readContract({
     address: addresses.hook,
-    abi: fairFlowHookAbi,
+    abi: hookAbi,
     functionName: "totalPublicTaxDonated",
     args: [POOL_ID],
   })) as bigint;

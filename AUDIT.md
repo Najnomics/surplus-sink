@@ -8,3 +8,8 @@ See Fair Path `AUDIT.md` for the shared v4 rules. This repo’s extra fixes:
 - Relayer is owner-set; not a permissionless mock refund.
 
 Tests: public tax, private receipt, replay, TEE heartbeat, surplus credit, fork smoke.
+
+## Residual (accepted)
+
+- `creditSurplus` trusts the owner-set relayer (Protect / MEV-Share role).
+- Empty `hookData` is private only while `policy.isFair` is true for the current block.

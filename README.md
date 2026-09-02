@@ -172,14 +172,11 @@ flowchart LR
 - Not a homegrown CoW matcher.
 - Not a claim that the testnet relayer *is* Flashbots mainnet. The video must say **signed receipt + donate is real**.
 
-## The console (to be built)
+## The console
 
-Judge path — two buttons:
+Live: **https://uhi10-surplus-sink.vercel.app**
 
-1. **Send private** — EIP-712 receipt in `hookData` (or TEE heartbeat), 0.05% fee; relayer `creditSurplus`; LP surplus ticker moves.
-2. **Send public** — 1.00% + 0.50% tax; recapture ticker moves.
-
-Pages: Overview, Swap (two corridors), Surplus tape, How it works. Frontend is built by Opus 4.8 / Claude Code (`FRONTEND.md`).
+Private vs public swap on **ssVOL / ssUSD**. Relayer `creditSurplus` is live via `SinkAgent` on Sepolia.
 
 ## Testing
 
@@ -196,13 +193,15 @@ test/
   SurplusSinkHook.t.sol
 script/
   DeployUnichain.s.sol
+  PopulateTraffic.s.sol
+frontend/
 ```
 
 ## Hookathon gates
 
 - Public repo (this repository)
 - Valid Uniswap v4 hook
-- Functioning frontend that calls the hook (see `FRONTEND.md`)
+- Functioning frontend: https://uhi10-surplus-sink.vercel.app
 - README partner integrations: Flashbots Protect / MEV-Share + Unichain Flashtestations
 - Video: Send private vs Send public, LP tickers, no AI voice
 - Original work for UHI10; not a resubmission of Fair Flow

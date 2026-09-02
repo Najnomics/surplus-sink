@@ -21,8 +21,11 @@ export function AboutPage() {
             <code>totalPublicTaxDonated</code>; surplus is a separate donate.
           </p>
           <p>
-            The live pool is a Unichain Sepolia <b>WETH / USDC</b> mock (18
-            decimals, faucet-mintable), not mainnet canonical USDC.
+            The live pool is Unichain Sepolia{" "}
+            <b>
+              {addresses.token0Symbol} / {addresses.token1Symbol}
+            </b>{" "}
+            (18-decimal mocks for this hook only).
           </p>
 
           <h3>Mechanism</h3>
