@@ -163,4 +163,75 @@ contract SurplusSinkHookTest is BaseTest {
             deadline: block.timestamp + 1
         });
     }
+
+    function test_expiredReceiptReverts() public {
+        uint256 deadline = block.timestamp - 1;
+        bytes32 structHash = keccak256(abi.encode(hook.RECEIPT_TYPEHASH(), deadline, uint256(1), PoolId.unwrap(poolId)));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", hook.DOMAIN_SEPARATOR(), structHash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(relayerPk, digest);
+        vm.expectRevert();
+        swapRouter.swapExactTokensForTokens({
+            amountIn: 1e18,
+            amountOutMin: 0,
+            zeroForOne: true,
+            poolKey: poolKey,
+            hookData: abi.encode(deadline, uint256(1), v, r, s),
+            receiver: address(this),
+            deadline: block.timestamp + 1
+        });
+    }
+
+    function test_creditSurplusToken1() public {
+        uint256 amount = 4e18;
+        MockERC20 token = MockERC20(Currency.unwrap(currency1));
+        token.mint(relayer, amount);
+        vm.startPrank(relayer);
+        IERC20(address(token)).approve(address(hook), amount);
+        hook.creditSurplus(poolKey, false, amount);
+        vm.stopPrank();
+        assertEq(hook.totalSurplusDonated(poolId), amount);
+    }
+
+    function test_creditZeroReverts() public {
+        vm.prank(relayer);
+        vm.expectRevert(SurplusSinkHook.ZeroAmount.selector);
+        hook.creditSurplus(poolKey, true, 0);
+    }
+
+    function test_setRelayerRevoke() public {
+        hook.setRelayer(relayer, false);
+        vm.prank(relayer);
+        vm.expectRevert(SurplusSinkHook.NotRelayer.selector);
+        hook.creditSurplus(poolKey, true, 1e18);
+    }
+
+    function test_wrongSignerReceipt() public {
+        uint256 pk2 = 0xB0B;
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes32 structHash = keccak256(abi.encode(hook.RECEIPT_TYPEHASH(), deadline, uint256(3), PoolId.unwrap(poolId)));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", hook.DOMAIN_SEPARATOR(), structHash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk2, digest);
+        vm.expectRevert();
+        swapRouter.swapExactTokensForTokens({
+            amountIn: 1e18,
+            amountOutMin: 0,
+            zeroForOne: true,
+            poolKey: poolKey,
+            hookData: abi.encode(deadline, uint256(3), v, r, s),
+            receiver: address(this),
+            deadline: block.timestamp + 1
+        });
+    }
+
+    function test_permissions() public {
+        Hooks.Permissions memory p = hook.getHookPermissions();
+        assertTrue(p.beforeSwap && p.afterSwap && p.afterSwapReturnDelta);
+        assertFalse(p.beforeSwapReturnDelta);
+    }
+
+    function test_staticFeeInitReverts() public {
+        PoolKey memory staticKey = PoolKey(currency0, currency1, 3000, 60, IHooks(hook));
+        vm.expectRevert();
+        poolManager.initialize(staticKey, Constants.SQRT_PRICE_1_1);
+    }
 }

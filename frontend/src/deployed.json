@@ -1,0 +1,19 @@
+{
+  "chainId": 1301,
+  "deployBlock": 61508573,
+  "hook": "0xc3EE9eC810aE91419ba70B78561e69E3Db0450c4",
+  "oracle": "0xF5D7dcFA8ae0323fCd5dEcC70938465849304627",
+  "policy": "0xF5D7dcFA8ae0323fCd5dEcC70938465849304627",
+  "relayer": "0x4b992F2Fbf714C0fCBb23baC5130Ace48CaD00cd",
+  "poolManager": "0x00B036B58a818B1BC34d502D3fE730Db729e62AC",
+  "swapRouter": "0x9cD2b0a732dd5e023a5539921e0FD1c30E198Dba",
+  "positionManager": "0xf969Aee60879C54bAAed9F3eD26147Db216Fd664",
+  "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+  "stateView": "0xf17D00ffF19D395712ea2Ee16E962a60eBa530BC",
+  "token0": "0x5CB7273e88F6f17E5a5051AfC2bD8D8A2f90de0E",
+  "token1": "0x9Cf385638a1091c59B86625C34EA4E1cCCADf6E4",
+  "token0Symbol": "ssVOL",
+  "token1Symbol": "ssUSD",
+  "fee": 8388608,
+  "tickSpacing": 60
+}

@@ -109,7 +109,11 @@ contract SurplusSinkHook is BaseHook, Ownable, ReentrancyGuard {
         returns (bytes4, BeforeSwapDelta, uint24)
     {
         bool priv = _isPrivate(hookData, key.toId());
-        if (hookData.length != 0 && !priv) revert BadReceipt();
+        if (hookData.length != 0 && !priv) {
+            (uint256 deadline,,,,) = abi.decode(hookData, (uint256, uint256, uint8, bytes32, bytes32));
+            if (block.timestamp > deadline) revert Expired();
+            revert BadReceipt();
+        }
         uint24 fee = priv ? PRIVATE_FEE : PUBLIC_FEE;
         return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
     }
