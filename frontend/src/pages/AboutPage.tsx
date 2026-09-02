@@ -20,6 +20,10 @@ export function AboutPage() {
             path: <b>1% + 50 bps</b> recapture. Recapture charts read{" "}
             <code>totalPublicTaxDonated</code>; surplus is a separate donate.
           </p>
+          <p>
+            The live pool is a Unichain Sepolia <b>WETH / USDC</b> mock (18
+            decimals, faucet-mintable), not mainnet canonical USDC.
+          </p>
 
           <h3>Mechanism</h3>
           <ul>

@@ -55,8 +55,8 @@ contract DeployUnichainScript is Script, Deployers {
     }
 
     function _fundPair(address deployer) internal returns (MockERC20 usd, MockERC20 vol) {
-        usd = new MockERC20("Surplus Sink USD", "ssUSD", 18);
-        vol = new MockERC20("Surplus Sink VOL", "ssVOL", 18);
+        usd = new MockERC20("USD Coin", "USDC", 18);
+        vol = new MockERC20("Wrapped Ether", "WETH", 18);
         if (address(usd) > address(vol)) (usd, vol) = (vol, usd);
         usd.mint(deployer, MINT_AMOUNT);
         vol.mint(deployer, MINT_AMOUNT);

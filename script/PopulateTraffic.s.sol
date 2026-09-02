@@ -90,13 +90,13 @@ contract PopulateTrafficScript is Script {
         SinkAgent agent = new SinkAgent(IUniswapV4Router04(payable(router)), IOracle(oracle), ISink(hook), key);
         IOracle(oracle).setBuilder(address(agent), true);
         ISink(hook).setRelayer(address(agent), true);
-        agent.arm(IMintable(token0), IMintable(token1), 50_000 ether);
-        agent.burstPrivate(6, 25 ether);
-        agent.burstPublic(10, 40 ether);
-        agent.credit(true, 80 ether);
-        agent.burstPrivate(4, 18 ether);
-        agent.burstPublic(8, 28 ether);
-        agent.credit(false, 50 ether);
+        agent.arm(IMintable(token0), IMintable(token1), 200_000 ether);
+        agent.burstPrivate(6, 2 ether);
+        agent.burstPublic(10, 3 ether);
+        agent.credit(true, 20 ether);
+        agent.burstPrivate(4, 1 ether);
+        agent.burstPublic(8, 2 ether);
+        agent.credit(false, 15 ether);
         vm.stopBroadcast();
 
         console2.log("SinkAgent", address(agent));
