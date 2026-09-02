@@ -114,6 +114,12 @@ body::before {
 .lagoon-app .content {
   padding-top: 28px;
 }
+.tape {
+  max-height: 720px;
+}
+.lagoon-pill {
+  box-shadow: 0 20px 60px rgba(8, 40, 55, 0.45);
+}
 
 .btn {
   border-radius: 999px;

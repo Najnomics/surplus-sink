@@ -15,5 +15,6 @@
   "token0Symbol": "ssVOL",
   "token1Symbol": "ssUSD",
   "fee": 8388608,
-  "tickSpacing": 60
+  "tickSpacing": 60,
+  "agent": "0xe1Bf5788d7eE1054E4a1854B9396Da5bC7FCd344"
 }

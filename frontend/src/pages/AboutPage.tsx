@@ -40,6 +40,13 @@ export function AboutPage() {
               pool.
             </li>
           </ul>
+          <h3>Agents</h3>
+          <p>
+            The Protect / MEV-Share relayer is the agent. It signs EIP-712
+            receipts and calls <code>creditSurplus</code>. TEE-attested private
+            flow also has to pulse and swap in the same block —{" "}
+            <code>SinkAgent</code> does both on Unichain Sepolia.
+          </p>
         </div>
       </section>
 
