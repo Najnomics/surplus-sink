@@ -37,14 +37,13 @@ There are two honest layers. Do not pretend the hook can see Flashbots from insi
 
 **On-chain (the hook)**
 
-1. **`beforeSwap`** — if `hookData` carries a valid **private-path proof** (builder commitment, Protect inclusion attestation, or MEV-Share refund receipt bound to this swap), return **private fee** (`PRIVATE_FEE`, 0.05%). Else return **public fee** (`PUBLIC_FEE`, 1.00%).
-2. **`afterSwap`** — public path: skim `PUBLIC_TAX_BIPS` of the output and `donate` to LPs (same recapture shape as Fair Flow). Private path: no tax; wait for surplus.
-3. **`creditSurplus(poolId, amount)`** — called by the **refund adapter** (Protect refund receiver / MEV-Share settlement). Pulls tokens, `donate`s to that pool, bumps `totalSurplusDonated`.
+1. **`beforeSwap`** — private if a registered TEE builder has heartbeated this block (`UnichainFairOracle.isFair`) **or** `hookData` is a valid EIP-712 `PrivateReceipt` signed by an owner-set relayer and bound to this `poolId`. Then `PRIVATE_FEE` (0.05%). Else `PUBLIC_FEE` (1.00%).
+2. **`afterSwap`** — public path: skim `PUBLIC_TAX_BIPS` of the unspecified token and `donate` to LPs. Private path: no tax. Receipts are burned so they cannot be replayed.
+3. **`creditSurplus(key, amountOn0, amount)`** — **relayer only**. `safeTransferFrom` real tokens, then `donate` → `settle` inside `PoolManager.unlock`.
 
-**Off-chain (the adapter)**
+**Off-chain (the relayer)**
 
-- Demo: `MockProtectAdapter` anyone can call `simulateRefund(poolId, amount)` so judges can click **Send private** and watch the LP pot tick.
-- Production: adapter is a contract authorized by the hook, whose only job is to receive Protect / MEV-Share refunds and call `creditSurplus` with the pool that originated the swap (swap hash → poolId map written in `afterSwap`).
+The relayer is whoever Flashbots Protect / MEV-Share (or your TEE builder) pays. That address is `setRelayer`'d. It signs receipts and later `creditSurplus`s. There is no permissionless mock refund.
 
 ```mermaid
 flowchart TD
@@ -71,26 +70,12 @@ flowchart LR
 
 ## Proof model — how the hook knows a path is private
 
-The hook **does not** call Flashbots. It verifies a **seam**, the same way Fair Path verifies Flashtestations:
+The hook **does not** call Flashbots. It verifies a **seam**:
 
-```solidity
-interface IPrivatePathVerifier {
-    /// @notice True if `proof` binds this swap to a private orderflow path.
-    function isPrivate(bytes calldata proof, bytes32 swapHash) external view returns (bool);
-}
+1. **TEE / Flashtestations** — `UnichainFairOracle` (live `FlashblockNumber` or owner-gated builder keys).
+2. **Protect-shaped EIP-712** — `PrivateReceipt(deadline, nonce, poolId)` signed by `isRelayer[signer]`.
 
-interface ISurplusReceiver {
-    function creditSurplus(PoolId poolId, uint256 amount) external;
-}
-```
-
-| | Demo (this repo) | Production |
-|---|---|---|
-| Verifier | `MockProtectVerifier` — frontend passes `abi.encode(true)` or a signed demo ticket | Flashbots Protect inclusion / MEV-Share refund receipt / builder commitment |
-| Refunds | `MockProtectAdapter.simulateRefund` | Authorized adapter only, tokens actually received from Protect |
-| Why | Judges click Send private vs Send public | Only genuine private flow gets the cheap lane **and** the surplus donate |
-
-**Honest boundary.** If Protect cannot pay a pool contract today, the adapter is the product until it can. The hook's job is still real: **fee by path + donate of whatever surplus arrives.** Do not claim in the video that a mock refund is a live Protect payment. Claim the **interface** and show the donate.
+`creditSurplus` pulls ERC-20 from that same relayer. Do not claim in the video that a testnet relayer key *is* Flashbots mainnet. Claim the **signed receipt + real donate**.
 
 ## Complete user flow
 
@@ -98,14 +83,16 @@ interface ISurplusReceiver {
 sequenceDiagram
     actor User
     participant UI as Console
-    participant Protect as Protect / Mock adapter
+    participant Protect as Relayer / Protect
+
     participant PM as PoolManager
     participant Hook as SurplusSinkHook
     participant LPs as In-range LPs
 
     alt Send private
         User->>UI: Swap via private path
-        UI->>Protect: submit (or mock ticket)
+        UI->>Protect: submit + signed receipt
+
         Protect->>PM: swap(hookData = proof)
         PM->>Hook: beforeSwap → PRIVATE_FEE
         PM->>Hook: afterSwap → map swapHash
@@ -154,7 +141,7 @@ sequenceDiagram
 
 **Partner integrations (hookathon README requirement)**
 
-- **Flashbots Protect / MEV-Share** — this is the partner. The repo ships `IPrivatePathVerifier`, `ISurplusReceiver`, `MockProtectVerifier`, and `MockProtectAdapter` so the frontend can prove the hook's donate path without a live refund in the first demo. Production binds the same interfaces to Protect / MEV-Share. No other partners are claimed. Future integrations are not listed.
+- **Flashbots Protect / MEV-Share** — partner. The hook verifies EIP-712 receipts from an owner-set relayer and donates `creditSurplus` tokens. TEE path uses Unichain Flashtestations / `FlashblockNumber`. No mock verifier in `src/`.
 
 ## Why it's profitable — as an idea and a business
 
@@ -183,45 +170,39 @@ flowchart LR
 - Not Fair Path (no flashblock slot schedule, no searcher slash).
 - Not Sold Backrun (no on-pool backrun NFT / auction).
 - Not a homegrown CoW matcher.
-- Not a claim that the mock adapter *is* Flashbots. The README and the video must say **seam + mock**, then **donate is real**.
+- Not a claim that the testnet relayer *is* Flashbots mainnet. The video must say **signed receipt + donate is real**.
 
 ## The console (to be built)
 
 Judge path — two buttons:
 
-1. **Send private** — proof in `hookData`, 0.05% fee, then `simulateRefund` (demo) or wait for adapter credit; LP surplus ticker moves.
-2. **Send public** — 1.00% + 0.50% tax; recapture ticker moves. Optional sandwich visualisation on the public path only.
+1. **Send private** — EIP-712 receipt in `hookData` (or TEE heartbeat), 0.05% fee; relayer `creditSurplus`; LP surplus ticker moves.
+2. **Send public** — 1.00% + 0.50% tax; recapture ticker moves.
 
-Pages: Overview, Swap (two corridors), Surplus tape, How it works (Protect diagram).
+Pages: Overview, Swap (two corridors), Surplus tape, How it works. Frontend is built by Opus 4.8 / Claude Code (`FRONTEND.md`).
 
-## Testing (to be built)
+## Testing
 
-- **Unit** — private proof → `PRIVATE_FEE` and no public tax; empty hookData → `PUBLIC_FEE` + tax; only adapter can `creditSurplus`; unknown `swapHash` reverts; donate amount equals credit.
-- **Integration** — private swap then refund; public swap then tax; mixed sequence; `totalSurplusDonated` vs `totalPublicTaxDonated` isolation.
-- **Fuzz** — public tax = `PUBLIC_TAX_BIPS` of output; surplus credits never hit the public-tax accumulator.
-- **Negative** — spoofed proof against the mock's rules; unauthorized `creditSurplus`.
+`forge test` — public tax, private receipt (no tax), receipt replay revert, TEE heartbeat private, relayer `creditSurplus`, unauthorized credit revert, garbage `hookData` revert.
 
-## Repository layout (target)
+## Repository layout
 
 ```
 src/
   SurplusSinkHook.sol
-  MockProtectVerifier.sol
-  MockProtectAdapter.sol
-  interfaces/IPrivatePathVerifier.sol
-  interfaces/ISurplusReceiver.sol
+  UnichainFairOracle.sol
+  interfaces/
 test/
   SurplusSinkHook.t.sol
-  MockProtect.t.sol
-frontend/
-  src/pages/{Overview,Swap,Surplus,About}*
+script/
+  DeployUnichain.s.sol
 ```
 
 ## Hookathon gates
 
 - Public repo (this repository)
 - Valid Uniswap v4 hook
-- Functioning frontend that calls the hook
-- README partner integrations: Flashbots Protect / MEV-Share (interfaces + mocks; donate path is the on-chain proof)
-- Video: Send private vs Send public, LP tickers, one sentence on the adapter boundary, no AI voice
+- Functioning frontend that calls the hook (see `FRONTEND.md`)
+- README partner integrations: Flashbots Protect / MEV-Share + Unichain Flashtestations
+- Video: Send private vs Send public, LP tickers, no AI voice
 - Original work for UHI10; not a resubmission of Fair Flow
