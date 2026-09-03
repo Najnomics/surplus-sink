@@ -2,6 +2,7 @@ import type { Address, Hex, WalletClient } from "viem";
 import {
   account,
   addresses,
+  chain,
   deployBlock,
   isZero,
   logsClient,
@@ -12,6 +13,7 @@ import {
 import {
   erc20Abi,
   hookAbi,
+  permit2Abi,
   policyAbi,
   stateViewAbi,
   swapRouterAbi,
@@ -211,8 +213,10 @@ const GAS = {
   approve: 80_000n,
   swap: 1_500_000n,
   liquidity: 2_500_000n,
-  policy: 120_000n,
+  policy: 250_000n,
   mint: 120_000n,
+  permit2: 80_000n,
+  credit: 800_000n,
 } as const;
 
 async function ensureRouterAllowance(
@@ -232,8 +236,8 @@ async function ensureRouterAllowance(
     abi: erc20Abi,
     functionName: "approve",
     args: [addresses.swapRouter, (1n << 256n) - 1n],
-    account: owner,
-    chain: null,
+    chain,
+    account: wc.account!,
     gas: GAS.approve,
   });
   await publicClient.waitForTransactionReceipt({ hash });
@@ -269,8 +273,8 @@ export async function executeSwap({
       owner,
       BigInt(Math.floor(Date.now() / 1000 + 3600)),
     ],
-    account: owner,
-    chain: null,
+    chain,
+    account: wc.account!,
     gas: GAS.swap,
   });
   await publicClient.waitForTransactionReceipt({ hash });
@@ -282,12 +286,37 @@ export async function incrementFlashblock(
   wc: WalletClient = walletClient,
 ): Promise<Hex> {
   const target = !isZero(addresses.oracle) ? addresses.oracle : addresses.policy;
+  const [onChainOwner, isBuilder] = await Promise.all([
+    publicClient.readContract({
+      address: target,
+      abi: policyAbi,
+      functionName: "owner",
+    }) as Promise<Address>,
+    publicClient.readContract({
+      address: target,
+      abi: policyAbi,
+      functionName: "builders",
+      args: [owner],
+    }) as Promise<boolean>,
+  ]);
+  if (!isBuilder && onChainOwner.toLowerCase() === owner.toLowerCase()) {
+    const enroll = await wc.writeContract({
+      address: target,
+      abi: policyAbi,
+      functionName: "setBuilder",
+      args: [owner, true],
+      chain,
+      account: wc.account!,
+      gas: 80_000n,
+    });
+    await publicClient.waitForTransactionReceipt({ hash: enroll });
+  }
   const hash = await wc.writeContract({
     address: target,
     abi: policyAbi,
     functionName: "incrementFlashblock",
-    account: owner,
-    chain: null,
+    chain,
+    account: wc.account!,
     gas: GAS.policy,
   });
   await publicClient.waitForTransactionReceipt({ hash });
@@ -305,8 +334,8 @@ export async function faucet(
       abi: erc20Abi,
       functionName: "mint",
       args: [owner, amount],
-      account: owner,
-      chain: null,
+      chain,
+      account: wc.account!,
       gas: GAS.mint,
     });
   const h0 = await mintOne(addresses.token0);
@@ -329,13 +358,85 @@ export async function addLiquidity(
   owner: Address = account.address,
   wc: WalletClient = walletClient,
 ): Promise<Hex> {
+  await ensurePosmPermit2(addresses.token0, owner, wc);
+  await ensurePosmPermit2(addresses.token1, owner, wc);
   const hash = await wc.sendTransaction({
     to: addresses.positionManager,
     data: calldata,
     value,
-    account: owner,
-    chain: null,
+    chain,
+    account: wc.account!,
     gas: GAS.liquidity,
+  });
+  await publicClient.waitForTransactionReceipt({ hash });
+  return hash;
+}
+
+async function ensurePosmPermit2(
+  token: Address,
+  owner: Address,
+  wc: WalletClient,
+) {
+  const allowance = (await publicClient.readContract({
+    address: token,
+    abi: erc20Abi,
+    functionName: "allowance",
+    args: [owner, addresses.permit2],
+  })) as bigint;
+  if (allowance < 10n ** 30n) {
+    const hash = await wc.writeContract({
+      address: token,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [addresses.permit2, (1n << 256n) - 1n],
+      chain,
+      account: wc.account!,
+      gas: GAS.approve,
+    });
+    await publicClient.waitForTransactionReceipt({ hash });
+  }
+  const p2 = await wc.writeContract({
+    address: addresses.permit2,
+    abi: permit2Abi,
+    functionName: "approve",
+    args: [
+      token,
+      addresses.positionManager,
+      (1n << 160n) - 1n,
+      Number((1n << 48n) - 1n),
+    ],
+    chain,
+    account: wc.account!,
+    gas: GAS.permit2,
+  });
+  await publicClient.waitForTransactionReceipt({ hash: p2 });
+}
+
+export async function creditSurplus(
+  owner: Address,
+  wc: WalletClient,
+  amountOn0 = true,
+  amount = 10n ** 18n,
+): Promise<Hex> {
+  const hash = await wc.writeContract({
+    address: addresses.agent,
+    abi: [
+      {
+        type: "function",
+        name: "credit",
+        stateMutability: "nonpayable",
+        inputs: [
+          { name: "amountOn0", type: "bool" },
+          { name: "amount", type: "uint256" },
+        ],
+        outputs: [],
+      },
+    ] as const,
+    functionName: "credit",
+    args: [amountOn0, amount],
+    chain,
+    account: wc.account!,
+    gas: GAS.credit,
   });
   await publicClient.waitForTransactionReceipt({ hash });
   return hash;

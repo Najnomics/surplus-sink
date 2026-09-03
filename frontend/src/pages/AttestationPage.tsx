@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAppData } from "../context/AppData";
 import { useToast } from "../context/Toast";
 import { addresses, explorerTx, isLocal, isZero } from "../lib/clients";
-import { incrementFlashblock, mine } from "../lib/actions";
+import { incrementFlashblock, mine, creditSurplus } from "../lib/actions";
 import { short } from "../lib/format";
 
 export function AttestationPage() {
@@ -81,6 +81,27 @@ export function AttestationPage() {
             <button className="btn btn-primary" disabled={!!busy || !configured} onClick={pulse}>
               {busy ?? "incrementFlashblock"}
             </button>
+            {!isZero(addresses.agent) && (
+              <button
+                className="btn btn-outline"
+                disabled={!!busy}
+                onClick={async () => {
+                  if (!signer) return;
+                  setBusy("creditSurplus…");
+                  try {
+                    const hash = await creditSurplus(signer.owner, signer.wc);
+                    toast.ok("Relayer credited surplus to LPs", explorerTx(hash));
+                    await refresh();
+                  } catch (e) {
+                    toast.err((e as Error).message.slice(0, 160));
+                  } finally {
+                    setBusy(null);
+                  }
+                }}
+              >
+                {busy === "creditSurplus…" ? busy : "creditSurplus"}
+              </button>
+            )}
             {isLocal && (
               <button className="btn btn-outline" disabled={!!busy} onClick={() => advance(1)}>
                 Mine 1 block
